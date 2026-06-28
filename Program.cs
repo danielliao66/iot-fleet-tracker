@@ -2,9 +2,7 @@
 using IotTracker.Actors;
 using IotTracker.Messages;
 using IotTracker.Infrastructure;
-using IotTracker.Hubs;
 using Microsoft.Extensions.Configuration;
-using Microsoft.AspNetCore.SignalR;
 
 // Build configuration pipeline (Reads JSON + Environment Variables)
 var config = new ConfigurationBuilder()
@@ -25,45 +23,13 @@ string token = Environment.GetEnvironmentVariable("INFLUXDB_TOKEN")
 // Initialize InfluxDB Middleware
 using var influxDb = new InfluxDbMiddleware(url: url, token: token, org: org, bucket: bucket);
 
-var builder = WebApplication.CreateBuilder(args);
+var system = new ActorSystem();
+var context = system.Root;
 
-// Add standard web and SignalR infrastructure
-builder.Services.AddSignalR();
-builder.Services.AddRazorPages();
-builder.Services.AddServerSideBlazor();
+// Pass the middleware via the factory producer
+var registryProps = Props.FromProducer(() => new FleetRegistryActor(influxDb));
 
-// Register the single global ActorSystem into the DI container
-builder.Services.AddSingleton(provider => new ActorSystem());
-
-var context = null;
-
-// Register the parent FleetRegistryActor so APIs can access
-builder.Services.AddSingleton(provider =>
-{
-    var system = provider.GetRequiredService<ActorSystem>();
-    
-    // Pass the middleware via the factory producer
-    var registryProps = Props.FromProducer(() => new FleetRegistryActor(influxDb, provider));
-
-    context = system.Root;
-    
-    return context.Spawn(registryProps); // Returns the PID of the registry
-});
-
-var app = builder.Build();
-
-app.UseStaticFiles();
-app.UseRouting();
-
-// Map the WebSocket paths for both Blazor and custom Map Hub
-app.MapBlazorHub();
-app.MapHub<MapHub>("/mapHub");
-app.MapFallbackToPage("/_Host");
-
-// Wake up the actor system upon server startup
-var registryPid = app.Services.GetRequiredService<PID>();
-
-app.Run();
+var registryPid = context.Spawn(registryProps);
 
 /*
 Console.WriteLine("Actor system started. Simulating data...");
@@ -101,7 +67,7 @@ var cancellationTokenSource = new CancellationTokenSource();
 var simulationTasks = Enumerable.Range(1, vehicleCount).Select(i => 
 {
     string deviceId = $"robot-{i:D3}";
-    return Task.Run(() => RunSingleVehicleSimulationAsync(context, registryPid, deviceId, cancellationTokenSource.Token));
+    return Task.Run(() => RunSingleVehicleSimulationAsync(context!, registryPid, deviceId, cancellationTokenSource.Token));
 }).ToArray();
 
 // Keep main thread alive monitoring console metrics
@@ -115,7 +81,7 @@ var monitorTask = Task.Run(async () =>
         string randomTarget = $"robot-{Random.Shared.Next(1, vehicleCount + 1):D3}";
         try
         {
-            var status = await context.RequestAsync<DeviceStatusResponse>(
+            var status = await context!.RequestAsync<DeviceStatusResponse>(
                 registryPid, 
                 new GetDeviceStatus(randomTarget), 
                 TimeSpan.FromSeconds(1)

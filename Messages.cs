@@ -21,11 +21,3 @@ public record DeviceStatusResponse(
     double BatteryLevel, 
     DateTime LastUpdated
 );
-
-public record LiveMapMarker(
-    string DeviceId,
-    double Lattitude,
-    double Longtitude,
-    double Speed,
-    double Battery
-);

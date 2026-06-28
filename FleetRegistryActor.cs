@@ -1,9 +1,6 @@
 using Proto;
 using IotTracker.Messages;
 using IotTracker.Infrastructure;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.SignalR;
-using IotTracker.Hubs;
 
 namespace IotTracker.Actors;
 
@@ -12,12 +9,10 @@ public class FleetRegistryActor : IActor
     // Tracks active children: Key = DeviceId, Value = Actor Process ID (PID)
     readonly Dictionary<string, PID> _devices = new();
     readonly InfluxDbMiddleware _influxMiddleware;
-    readonly IServiceProvider _serviceProvider;
 
-    public FleetRegistryActor(InfluxDbMiddleware influxMiddleware, IServiceProvider serviceProvider)
+    public FleetRegistryActor(InfluxDbMiddleware influxMiddleware)
     {
         _influxMiddleware = influxMiddleware;
-        _serviceProvider = serviceProvider;
     }
 
     public Task ReceiveAsync(IContext context)
@@ -56,12 +51,10 @@ public class FleetRegistryActor : IActor
     PID GetOrCreateDeviceActor(IContext context, string deviceId)
     {
         if (!_devices.TryGetValue(deviceId, out var devicePid))
-        {
-            var hubContext = _serviceProvider.GetRequiredService<IHubContext<MapHub>>();
-            
+        {   
             // Define how to create a DeviceActor child instance
             // Apply the InfluxDB interceptor middleware to the DeviceActor configuration
-            var props = Props.FromProducer(() => new DeviceActor(hubContext))
+            var props = Props.FromProducer(() => new DeviceActor())
                              .WithReceiverMiddleware(_influxMiddleware.Intercept);
             
             // Spawn the child under the registry's supervision hierarchy

@@ -1,7 +1,5 @@
 using Proto;
-using Microsoft.AspNetCore.SignalR;
 using IotTracker.Messages;
-using IotTracker.Hubs;
 
 namespace IotTracker.Actors;
 
@@ -14,13 +12,6 @@ public class DeviceActor : IActor
     double _speed;
     double _batteryLevel;
     DateTime _lastUpdated;
-    
-    readonly IHubContext<MapHub> _hubContext;
-
-    public DeviceActor(IHubContext<MapHub> hubContext)
-    {
-        _hubContext = hubContext;
-    }
 
     public Task ReceiveAsync(IContext context)
     {
@@ -40,15 +31,6 @@ public class DeviceActor : IActor
         _speed = msg.Speed;
         _batteryLevel = msg.BatteryLevel;
         _lastUpdated = DateTime.UtcNow;
-
-        // Broadcast the location live to connected browsers
-        await _hubContext.Clients.All.SendAsync("ReceiveLocation", new LiveMapMarker(
-            msg.DeviceId,
-            msg.Lattitude,
-            msg.Longtitude,
-            msg.Speed,
-            msg.BatteryLevel
-        ));
     }
 
     Task HandleQuery(IContext context)
