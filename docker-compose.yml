@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  influxdb:
+    image: influxdb:2.7
+    container_name: influxdb_local
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+    environment:
+      - INFLUXD_TRACKING_DISABLED=true
+
+  influxdb-setup:
+    image: influxdb:2.7
+    container_name: influxdb_setup
+    depends_on:
+      - influxdb
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Waiting for InfluxDB to boot..."
+        until curl -s http://influxdb:8086/health | grep -q '"status":"pass"'; do
+          sleep 2
+        done
+        echo "Initializing InfluxDB organization, bucket, and explicit token..."
+        influx setup \
+          --host http://influxdb:8086 \
+          --org fleet-org \
+          --bucket fleet-telemetry \
+          --username admin \
+          --password password12345 \
+          --token ${INFLUXDB_TOKEN} \
+          --force
+        echo "Setup complete!"
+    restart: "no"
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: grafana_local
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - influxdb
+
+volumes:
+  influxdb_data:
+  grafana_data:

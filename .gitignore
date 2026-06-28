@@ -1,0 +1,10 @@
+# Ignore compiled binaries and tracking symbols
+bin/
+obj/
+
+# Ignore sensitive settings files containing local configurations
+appsettings.json
+appsettings.Development.json
+
+# Ignore local container secret cache parameters
+.env
