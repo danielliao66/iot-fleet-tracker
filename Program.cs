@@ -17,7 +17,7 @@ string bucket = config["InfluxDb:Bucket"] ?? "fleet-telemetry";
 
 // Look for a distinct environment variable first, then fallback to JSON definition
 string token = Environment.GetEnvironmentVariable("INFLUXDB_TOKEN") 
-               ?? "d8b394fcf2f4a132e4d075841029c782bcfb17cd5d36e2f69e6b4f72bc0a498b"//config["InfluxDb:Token"] 
+               ?? config["InfluxDb:Token"] 
                ?? throw new InvalidOperationException("InfluxDB Secret Token is missing!");
 
 // Initialize InfluxDB Middleware
