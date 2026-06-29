@@ -7,7 +7,7 @@ public class DeviceActor : IActor
 {
     // The internal state of the vehicle
     string _deviceId = string.Empty;
-    double _lattitude;
+    double _latitude;
     double _longtitude;
     double _speed;
     double _batteryLevel;
@@ -26,7 +26,7 @@ public class DeviceActor : IActor
     async Task HandleTelemetry(SendTelemetry msg)
     {
         _deviceId = msg.DeviceId;
-        _lattitude = msg.Lattitude;
+        _latitude = msg.Latitude;
         _longtitude = msg.Longtitude;
         _speed = msg.Speed;
         _batteryLevel = msg.BatteryLevel;
@@ -37,7 +37,7 @@ public class DeviceActor : IActor
     {
         var response = new DeviceStatusResponse(
             _deviceId, 
-            _lattitude, 
+            _latitude, 
             _longtitude, 
             _speed, 
             _batteryLevel, 

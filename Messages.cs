@@ -3,7 +3,7 @@ namespace IotTracker.Messages;
 // Telemetry data from physical devices
 public record SendTelemetry(
     string DeviceId,
-    double Lattitude,
+    double Latitude,
     double Longtitude, 
     double Speed,
     double BatteryLevel
@@ -15,7 +15,7 @@ public record GetDeviceStatus(string DeviceId);
 // Response containing the in-memory state
 public record DeviceStatusResponse(
     string DeviceId, 
-    double Lattitude, 
+    double Latitude, 
     double Longtitude, 
     double Speed, 
     double BatteryLevel, 

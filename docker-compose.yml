@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   influxdb:
     image: influxdb:2.7
@@ -10,6 +8,12 @@ services:
       - influxdb_data:/var/lib/influxdb2
     environment:
       - INFLUXD_TRACKING_DISABLED=true
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=password12345
+      - DOCKER_INFLUXDB_INIT_ORG=fleet-org
+      - DOCKER_INFLUXDB_INIT_BUCKET=fleet-telemetry
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_TOKEN}
 
   influxdb-setup:
     image: influxdb:2.7
@@ -17,22 +21,6 @@ services:
     depends_on:
       - influxdb
     entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        echo "Waiting for InfluxDB to boot..."
-        until curl -s http://influxdb:8086/health | grep -q '"status":"pass"'; do
-          sleep 2
-        done
-        echo "Initializing InfluxDB organization, bucket, and explicit token..."
-        influx setup \
-          --host http://influxdb:8086 \
-          --org fleet-org \
-          --bucket fleet-telemetry \
-          --username admin \
-          --password password12345 \
-          --token ${INFLUXDB_TOKEN} \
-          --force
-        echo "Setup complete!"
     restart: "no"
 
   grafana:

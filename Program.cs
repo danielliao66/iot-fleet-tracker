@@ -6,7 +6,7 @@ using Microsoft.Extensions.Configuration;
 
 // Build configuration pipeline (Reads JSON + Environment Variables)
 var config = new ConfigurationBuilder()
-    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .AddEnvironmentVariables() // Automatically overrides JSON keys matching patterns
     .Build();
 
@@ -49,7 +49,7 @@ var status = await context.RequestAsync<DeviceStatusResponse>(
 
 Console.WriteLine($"\n[Result Received]");
 Console.WriteLine($"Device: {status.DeviceId}");
-Console.WriteLine($"Location: {status.Lattitude}, {status.Longtitude}");
+Console.WriteLine($"Location: {status.Latitude}, {status.Longtitude}");
 Console.WriteLine($"Speed: {status.Speed} mph");
 Console.WriteLine($"Updated At: {status.LastUpdated}");
 */
@@ -87,7 +87,7 @@ var monitorTask = Task.Run(async () =>
                 TimeSpan.FromSeconds(1)
             );
             
-            Console.WriteLine($"[AUDIT LOG] {status.DeviceId} | Lattitude: {status.Lattitude:F4}, Longtitude: {status.Longtitude:F4} | Speed: {status.Speed:F1} mph | Battery: {status.BatteryLevel:F1}%");
+            Console.WriteLine($"[AUDIT LOG] {status.DeviceId} | Latitude: {status.Latitude:F4}, Longtitude: {status.Longtitude:F4} | Speed: {status.Speed:F1} mph | Battery: {status.BatteryLevel:F1}%");
         }
         catch (TimeoutException)
         {
@@ -111,7 +111,7 @@ Console.WriteLine("Simulation ended safely.");
 static async Task RunSingleVehicleSimulationAsync(IRootContext context, PID registryPid, string deviceId, CancellationToken ct)
 {
     // Start everyone with random baselines
-    double lattitude = 40.7128 + (Random.Shared.NextDouble() - 0.5) * 0.2;
+    double latitude = 40.7128 + (Random.Shared.NextDouble() - 0.5) * 0.2;
     double longtitude = -74.0060 + (Random.Shared.NextDouble() - 0.5) * 0.2;
     double battery = Random.Shared.Next(70, 100);
     
@@ -122,14 +122,14 @@ static async Task RunSingleVehicleSimulationAsync(IRootContext context, PID regi
     {
         // Mutate real-world attributes
         double speed = Random.Shared.Next(45, 75) + Random.Shared.NextDouble();
-        lattitude += (Random.Shared.NextDouble() - 0.48) * 0.002; // drifting north-east
+        latitude += (Random.Shared.NextDouble() - 0.48) * 0.002; // drifting north-east
         longtitude += (Random.Shared.NextDouble() - 0.48) * 0.002;
         battery -= 0.05 * (speed / 60.0);
 
         if (battery <= 5) battery = 100; // auto-recharge simulation rule
 
         // Fire & Forget telemetry straight to the cluster tracking router
-        context.Send(registryPid, new SendTelemetry(deviceId, lattitude, longtitude, speed, battery));
+        context.Send(registryPid, new SendTelemetry(deviceId, latitude, longtitude, speed, battery));
 
         // Sleep for around 2 seconds
         await Task.Delay(TimeSpan.FromMilliseconds(1800 + Random.Shared.Next(0, 400)), ct);

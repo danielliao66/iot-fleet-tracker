@@ -17,9 +17,17 @@ public class InfluxDbMiddleware : IDisposable
     {
         _org = org;
         _bucket = bucket;
+
+        // Explicitly configure the options to enforce token authentication
+        var options = new InfluxDBClientOptions.Builder()
+            .Url(url)
+            .AuthenticateToken(token)
+            .Org(org)
+            .Bucket(bucket)
+            .Build();
         
         // Initialize InfluxDB Client
-        _client = new InfluxDBClient(url, token);
+        _client = new InfluxDBClient(options);
         _writeApi = _client.GetWriteApiAsync();
     }
 
@@ -37,7 +45,7 @@ public class InfluxDbMiddleware : IDisposable
                 var point = PointData
                     .Measurement("vehicle_telemetry")
                     .Tag("device_id", telemetry.DeviceId)
-                    .Field("latitude", telemetry.Lattitude)
+                    .Field("latitude", telemetry.Latitude)
                     .Field("longitude", telemetry.Longtitude)
                     .Field("speed", telemetry.Speed)
                     .Field("battery_level", telemetry.BatteryLevel)
